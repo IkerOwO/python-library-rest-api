@@ -10,14 +10,16 @@ class Book(db.Base):
     title = Column(String(50), nullable=False)
     description = Column(String(100), nullable=False)
     price = Column(Float, nullable=False)
+    isAvailable = Column(Boolean, default=True, nullable=False)
 
-    def __init__(self, title, description, price):
+    def __init__(self, title, description, price, isAvailable):
         self.title = title
         self.description = description
         self.price = price
+        self.isAvailable = isAvailable
 
     def __repr__(self):
-        return f'Book({self.title}, {self.description}, {self.price})'
+        return f'Book({self.title}, {self.description}, {self.price}, {self.isAvailable})'
 
     def __str__(self):
         return self.title
