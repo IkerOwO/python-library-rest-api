@@ -1,0 +1,24 @@
+[project]
+name = "library-rest"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "IkerOwO", email = "162556194+IkerOwO@users.noreply.github.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "bcrypt>=5.0.0",
+    "fastapi>=0.141.1",
+    "mysql-connector-python>=26.7.0",
+    "pydantic>=2.13.5",
+    "python-dotenv>=1.2.3",
+    "sqlalchemy>=2.1.1",
+]
+
+[project.scripts]
+library-rest = "library_rest:main"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
