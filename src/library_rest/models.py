@@ -1,9 +1,13 @@
-import library_rest.db as db
 from sqlalchemy import Column, String, Integer, Float, Boolean
+from sqlalchemy.orm import DeclarativeBase
+from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
+
+class Base(DeclarativeBase):
+    pass
 
 # Modelos / Tablas
 # Modelo de libro
-class Book(db.Base):
+class Book(Base):
     __tablename__ = 'book'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
@@ -25,19 +29,8 @@ class Book(db.Base):
         return self.title
 
 # Modelo de usuario
-class User(db.Base):
-    __tablename__ = 'users'
+class User(SQLAlchemyBaseUserTableUUID, Base):
+    pass
 
-    id = Column(Integer, autoincrement=True, primary_key=True)
-    username = Column(String(30), nullable=False)
-    email = Column(String(40), nullable=False)
-    password = Column(String(100), nullable=False)
-    isActive = Column(Boolean, default=True, nullable=False)
-
-    def __init__(self, username, email, password, isActive):
-        self.username = username
-        self.email = email
-        self.password = password
-        self.isActive = isActive
 
     

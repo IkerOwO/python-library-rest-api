@@ -1,5 +1,8 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy import URL, create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from library_rest.models import User
 from dotenv import load_dotenv
 import os
 
@@ -9,12 +12,25 @@ password = os.getenv("MYSQL_PASS")
 user = os.getenv("MYSQL_USER")
 db = os.getenv("DATABASE_NAME")
 
-# Creamos la conexion
-engine = create_engine(f'mysql+mysqlconnector://{user}/{password}@localhost/{db}')
+# Creamos las conexiones síncrona y asíncrona
+sync_url = URL.create(
+    "mysql+mysqlconnector",
+    username=user,
+    password=password,
+    host="localhost",
+    database=db,
+)
+async_url = URL.create(
+    "mysql+asyncmy",
+    username=user,
+    password=password,
+    host="localhost",
+    database=db,
+)
+engine = create_engine(sync_url)
 SessionLocal = sessionmaker(bind=engine)
-
-class Base(DeclarativeBase):
-    pass
+async_engine = create_async_engine(async_url)
+AsyncSessionLocal = async_sessionmaker(async_engine, expire_on_commit=False)
 
 # Creamos la funcion que usaremos mas tarde para las queries
 def get_db():
@@ -23,3 +39,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
+async def get_user_db():
+    async with AsyncSessionLocal() as session:
+        yield SQLAlchemyUserDatabase(session, User)

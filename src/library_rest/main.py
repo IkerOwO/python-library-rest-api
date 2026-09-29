@@ -1,14 +1,20 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from library_rest.db import *
-from library_rest.models import *
-import bcrypt
+from library_rest.db import get_db
+from library_rest.models import Book
+from library_rest.users import (
+    UserCreate,
+    UserManager,
+    UserRead,
+    UserUpdate,
+    auth_backend,
+    fastapi_users,
+    get_user_manager,
+)
 
 # Instanciamos FastAPI
 app = FastAPI()
-
-# Generamos el Salt
-salt = bcrypt.gensalt()
 
 # Endpoints Libro
 # Sacar libro mediante titulo
@@ -26,8 +32,8 @@ def get_all_books(db: Session = Depends(get_db)):
 
 # Insertar nuevo libro
 @app.post("/book/create")
-def insert_book(title: str, desc: str, price: float, isAvailable: bool, db: Session = Depends(get_db)):
-    db_libro = Book(title=title, description=desc, price=price, isAvailable=isAvailable)
+def insert_book(title: str, desc: str, price: float, db: Session = Depends(get_db)):
+    db_libro = Book(title=title, description=desc, price=price, isAvailable=True)
     db.add(db_libro)
     db.commit()
     db.refresh()
@@ -56,19 +62,41 @@ def delete_book(book_id: int, db: Session = Depends(get_db)):
 
 
 # Endpoints Usuarios
-# Registrar usuario
-@app.post("/auth/create")
-def register_user(user: User, db: Session = Depends(get_db)):
-    pass
+# Registrar usuario
+@app.post("/auth/register", response_model=UserRead, status_code=201)
+async def register(user_data: UserCreate, user_manager: UserManager = Depends(get_user_manager)):
+    return await user_manager.create(user_data, safe=True)
 
+# Login usuario
+@app.post("/auth/login", tags=["auth"])
+async def login(
+    request: Request,
+    credentials: OAuth2PasswordRequestForm = Depends(),
+    user_manager: UserManager = Depends(get_user_manager),
+    strategy=Depends(auth_backend.get_strategy),
+):
+    user = await user_manager.authenticate(credentials)
+    if user is None or not user.is_active:
+        raise HTTPException(status_code=400, detail="Credenciales incorrectas!")
 
+    response = await auth_backend.login(strategy, user)
+    await user_manager.on_after_login(user, request, response)
+    return response
 
-"""
-# Hashing
-salt = bcrypt.gensalt()
-hashed = bcrypt.hashpw(password, salt)
-
-# Verificación
-if bcrypt.checkpw(password, hashed):
-    print("La contraseña coincide")
-"""
+# Rutas automáticas que genera fastapi-users
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/auth/jwt", tags=["auth"]
+)
+app.include_router(
+    fastapi_users.get_reset_password_router(),
+    prefix="/auth", tags=["auth"]
+)
+app.include_router(
+    fastapi_users.get_verify_router(UserRead),
+    prefix="/auth", tags=["auth"]
+)
+app.include_router(
+    fastapi_users.get_users_router(UserRead, UserUpdate),
+    prefix="/users", tags=["users"]
+)

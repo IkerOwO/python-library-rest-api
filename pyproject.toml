@@ -8,12 +8,14 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "asyncmy>=0.2.15",
     "bcrypt>=5.0.0",
     "fastapi>=0.141.1",
+    "fastapi-users[sqlalchemy]>=15.0.5",
     "mysql-connector-python>=26.7.0",
     "pydantic>=2.13.5",
     "python-dotenv>=1.2.3",
-    "sqlalchemy>=2.1.1",
+    "sqlalchemy[asyncio]>=2.0,<2.1",
 ]
 
 [project.scripts]
